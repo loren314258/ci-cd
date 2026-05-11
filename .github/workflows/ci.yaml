@@ -43,7 +43,6 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # --- שלב ה-DEPLOY המעודכן ---
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -51,16 +50,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 1. התחברות ל-ECR מתוך השרת עם sudo כדי שאישור הכניסה יישמר ב-root
             aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin 010594764177.dkr.ecr.ap-south-1.amazonaws.com
-            
-            # 2. משיכת ה-Image החדש עם sudo (פותר את שגיאת ה-no basic auth)
             sudo docker compose pull
-            
-            # 3. רענון הקונטיינרים - החלפת הגרסה הישנה בחדשה
             sudo docker compose up -d --remove-orphans
-            
-            # 4. ניקוי Images ישנים שתופסים מקום בשרת
             sudo docker image prune -f
 
       - name: Cleanup
