@@ -10,15 +10,14 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-  steps:
+    steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # שימוש ב-docker compose (בלי מקף)
       - name: Build and Run E2E Environment
         run: |
           docker compose up -d --build
-          sleep 30 
+          sleep 40
 
       - name: Run E2E Test (curl)
         run: |
@@ -26,8 +25,7 @@ jobs:
 
       - name: View Container Logs on Failure
         if: failure()
-        run: |
-          docker compose logs
+        run: docker compose logs
 
       - name: Cleanup
         if: always()
