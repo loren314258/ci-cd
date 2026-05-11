@@ -43,6 +43,24 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+      # --- שלב ה-DEPLOY החדש ---
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # התחברות ל-ECR מתוך השרת
+            aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin 010594764177.dkr.ecr.ap-south-1.amazonaws.com
+            
+            # משיכת ה-Image החדש ורענון הקונטיינרים
+            sudo docker compose pull
+            sudo docker compose up -d --remove-orphans
+            
+            # ניקוי Images ישנים שתופסים מקום
+            sudo docker image prune -f
+
       - name: Cleanup
         if: always()
         run: docker compose down
