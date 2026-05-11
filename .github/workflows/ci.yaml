@@ -14,7 +14,6 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # שלב הבדיקות - חשוב לוודא שהכל עובד לפני ה-Push
       - name: Build and Run E2E Environment
         run: |
           docker compose up -d --build
@@ -24,8 +23,6 @@ jobs:
         run: |
           curl -v http://localhost:5000/
 
-      # --- שלב ה-PUBLISH ל-AWS ---
-      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
