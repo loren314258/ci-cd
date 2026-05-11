@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Container 1: EntryTracker App (Flask)
+  entrytracker-app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db-mysql
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=app_db
+    networks:
+      - frontend-net
+      - backend-net
+    depends_on:
+      - db-mysql
+
+  # Container 2: MySQL Database
+  db-mysql:
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=app_db
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backend-net
+
+networks:
+  # רשת לתקשורת בין ה-App ל-Nginx (או גישה חיצונית)
+  frontend-net:
+    driver: bridge
+  # רשת מבודדת לתקשורת בין ה-App ל-DB
+  backend-net:
+    driver: bridge
+
+volumes:
+  # Volume ייעודי לשמירת נתוני בסיס הנתונים (Persistence)
+  db-data:
