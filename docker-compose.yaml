@@ -1,10 +1,9 @@
 version: '3.8'
 
 services:
-  # Container 1: EntryTracker App (Flask)
   entrytracker-app:
-    # שימוש ב-Image מתוך ה-AWS ECR במקום בנייה מקומית
-    image: 010594764177.dkr.ecr.ap-south-1.amazonaws.com/entry-tracker:latest
+    # השינוי כאן: במקום למשוך מה-ECR, בונים מהקוד המקומי לצורך הבדיקות ב-CI
+    build: .
     ports:
       - "5000:5000"
     environment:
@@ -18,7 +17,6 @@ services:
     depends_on:
       - db-mysql
 
-  # Container 2: MySQL Database
   db-mysql:
     image: mysql:5.7
     environment:
@@ -30,13 +28,10 @@ services:
       - backend-net
 
 networks:
-  # רשת לתקשורת חיצונית
   frontend-net:
     driver: bridge
-  # רשת מבודדת לתקשורת פנימית מול ה-DB
   backend-net:
     driver: bridge
 
 volumes:
-  # שמירת נתוני בסיס הנתונים
   db-data:
