@@ -10,39 +10,26 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: app_db
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
+      - name: Build and Run E2E Environment
         run: |
-          python -m pip install --upgrade pip
-          pip install Flask pymysql
+          docker-compose up -d --build
+          # המתנה שה-MySQL יסיים לעלות (הוא לוקח זמן)
+          sleep 30 
 
-      - name: Run application in background
+      - name: Run E2E Test (curl)
         run: |
-          export DB_HOST=127.0.0.1
-          export DB_USER=root
-          export DB_PASSWORD=password
-          export DB_NAME=app_db
-          python app.py > app.log 2>&1 &
-          sleep 15
+          # בדיקה שהאפליקציה עונה ומצליחה לדבר עם ה-DB
+          curl -v http://localhost:5000/
 
-      - name: Run Unit Test (curl)
+      - name: View Container Logs on Failure
+        if: failure()
         run: |
-          curl -v http://localhost:5000/ || (cat app.log && exit 1)
+          docker-compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose down
