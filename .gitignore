@@ -1,0 +1,21 @@
+# אבטחת מידע - חסימת מפתחות גישה של AWS ושרתים
+*.pem
+*.csv
+*accessKeys*
+key ID.txt
+KEY ID/
+
+# קבצי הגדרות מקומיים וסיסמאות של ה-DB
+.env
+.env.local
+
+# קבצי מערכת של פייתון וסביבות וירטואליות
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# קבצי מערכת הפעלה וזבל
+.DS_Store
+Thumbs.db

@@ -1,31 +1,36 @@
-version: '3.8'
-
 services:
   entrytracker-app:
-    # השינוי כאן: במקום למשוך מה-ECR, בונים מהקוד המקומי לצורך הבדיקות ב-CI
     build: .
     ports:
       - "5000:5000"
     environment:
       - DB_HOST=db-mysql
       - DB_USER=root
-      - DB_PASSWORD=password
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=app_db
     networks:
       - frontend-net
       - backend-net
     depends_on:
-      - db-mysql
+      db-mysql:
+        condition: service_healthy
+    restart: unless-stopped
 
   db-mysql:
     image: mysql:5.7
     environment:
-      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=app_db
     volumes:
       - db-data:/var/lib/mysql
     networks:
       - backend-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 networks:
   frontend-net:

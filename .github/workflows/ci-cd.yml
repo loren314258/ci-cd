@@ -1,0 +1,81 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-push:
+    runs-on: ubuntu-latest
+
+    services:
+      db-mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: app_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Set up local .env for testing
+      run: |
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+
+    - name: Build and Start Containers with Healthcheck
+      run: |
+        docker compose up -d --build --wait
+
+    - name: Run Integration Tests
+      run: |
+        # כאן מריצים את פקודת הבדיקות שלך (למשל pytest או הרצת סקריפט בדיקה)
+        curl -f http://localhost:5000/ || exit 1
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+
+    - name: Log in to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Tag and Push Image to ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: entry-tracker
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # במקום לבנות מחדש, אנחנו פשוט לוקחים את האימג' שכבר נבנתה ונבחנה בצעד הקודם, ומתייגים אותה ל-ECR
+        docker tag entrytracker-entrytracker-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker tag entrytracker-entrytracker-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+    - name: Clean up Containers
+      if: always()
+      run: |
+        docker compose down -v
