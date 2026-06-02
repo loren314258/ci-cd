@@ -68,9 +68,9 @@ jobs:
         ECR_REPOSITORY: entry-tracker
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # במקום לבנות מחדש, אנחנו פשוט לוקחים את האימג' שכבר נבנתה ונבחנה בצעד הקודם, ומתייגים אותה ל-ECR
-        docker tag entrytracker-entrytracker-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker tag entrytracker-entrytracker-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        # משתמשים בשם האימג' הקבוע שהגדרנו בקומפוז
+        docker tag entrytracker-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker tag entrytracker-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
         
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
